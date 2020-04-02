@@ -44,10 +44,15 @@ def add_event(e, context):
     }
 
 def delete_event(e, context):
-    # TODO
+    event = eventSchema.loads(e['body'])
+   
+    session = Session()
+    session.delete(event)
+    session.commit()
+    session.close()
     return {
         'statusCode': 200,
-        'body': 'Hello from delete event'
+        'body': 'Event successfully deleted'
     }
 
 def update_event(e, context):
