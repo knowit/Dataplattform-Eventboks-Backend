@@ -6,6 +6,7 @@ from util.schemas import eventSchema
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
 
+
 def get_events(e, context):
     # TODO: Should filter by creator
     session = Session()
@@ -16,23 +17,25 @@ def get_events(e, context):
         'body': eventSchema.dumps(result, many=True)
     }
 
+
 def get_event(e, context):
     event_id = e['pathParameters']['id']
 
     session = Session()
     result = session.query(Event).filter(Event.id == event_id).first()
     session.close()
-    
+
     return {
         'statusCode': 200,
         'body': eventSchema.dumps(result)
     }
 
+
 def add_event(e, context):
     body = eventSchema.loads(e['body'])
     logger.info(body)
     event = Event(**body)
-    
+
     session = Session()
     session.add(event)
     session.commit()
@@ -43,9 +46,10 @@ def add_event(e, context):
         'body': 'Success'
     }
 
+
 def delete_event(e, context):
     event = eventSchema.loads(e['body'])
-   
+
     session = Session()
     session.delete(event)
     session.commit()
@@ -55,6 +59,7 @@ def delete_event(e, context):
         'body': 'Event successfully deleted'
     }
 
+
 def update_event(e, context):
     # TODO
     return {
@@ -62,5 +67,14 @@ def update_event(e, context):
         'body': 'Hello from update event'
     }
 
+
 def create_database(event, context):
     create_tables()
+
+
+def verify_eventcode():
+    # TODO
+    return{
+        'statusCode': 200,
+        'body': 'Hello from verify'
+    }
