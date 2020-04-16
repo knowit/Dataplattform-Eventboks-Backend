@@ -7,9 +7,9 @@ logger = logging.getLogger()
 logger.setLevel(logging.INFO)
 
 def get_events(e, context):
-    # TODO: Should filter by creator
     session = Session()
-    result = session.query(Event).all()
+    creator = json.loads(e['body'])['creator']
+    result = session.query(Event).filter(Event.creator == creator)
     session.close()
     return {
         'statusCode': 200,
@@ -56,10 +56,28 @@ def delete_event(e, context):
     }
 
 def update_event(e, context):
-    # TODO
+    event_id = e['pathParameters']['id']
+    session = Session()
+    event = session.query(Event).filter(Event.id == event_id).first()
+    if not event:
+        return {
+            'statusCode': 404,
+            'body': 'Event not found'
+    }
+    
+    body = eventSchema.loads(e['body'])
+    event.creator = body["creator"]
+    event.start = body["start"]
+    event.end = body["end"]
+    event.eventcode = body["eventcode"]
+    event.active = body["active"]
+    
+    session.commit()
+    session.close()
+
     return {
         'statusCode': 200,
-        'body': 'Hello from update event'
+        'body': 'success'
     }
 
 def create_database(event, context):
