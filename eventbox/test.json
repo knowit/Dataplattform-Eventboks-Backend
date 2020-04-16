@@ -1,0 +1,6 @@
+{
+    "pathParameters": {
+        "id": "42069"
+    },
+    "body": {"eventname": "testevent","creator": "test@test.test","start": "2020-04-16T08:00Z","end": "2020-04-16T16:00Z","active": true}
+}

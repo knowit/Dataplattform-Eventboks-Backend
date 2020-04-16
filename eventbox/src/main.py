@@ -72,9 +72,14 @@ def create_database(event, context):
     create_tables()
 
 
-def verify_eventcode():
-    # TODO
+def verify_eventcode(e, context):
+    event_code = e['pathParameters']['eventcode']
+
+    session = Session()
+    event = session.query(Event).filter(Event.eventcode == event_code).first()
+    session.close()
+
     return{
         'statusCode': 200,
-        'body': 'Hello from verify'
+        'body': eventSchema.dumps(event, many=True)
     }
