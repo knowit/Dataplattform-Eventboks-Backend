@@ -8,9 +8,9 @@ logger = logging.getLogger()
 logger.setLevel(logging.INFO)
 
 def get_events(e, context):
+    # TODO: Should filter by creator
     session = Session()
-    creator = json.loads(e['body'])['creator']
-    result = session.query(Event).filter(Event.creator == creator)
+    result = session.query(Event).all()
     session.close()
     return {
         'statusCode': 200,
@@ -59,24 +59,18 @@ def delete_event(e, context):
 def update_event(e, context):
     event_id = e['pathParameters']['id']
     session = Session()
-    event = session.query(Event).filter(Event.id == event_id).first()
-    try:
-        body = eventSchema.loads(e['body'])
-        event.creator = body["creator"]
-        event.start = body["start"]
-        event.end = body["end"]
-        event.eventcode = body["eventcode"]
-        event.active = body["active"]
-        session.commit()
-    except (UnmappedInstanceError, AttributeError):
-        return{
-            'statusCode' : 404,
-            'body' : 'Event with ID ' + str(event_id) + ' not found'
-        } 
+    body = json.loads(e['body'])
+    res = session.query(Event).filter(Event.id == event_id).update(body)
+    session.commit()
     session.close()
+    if res > 0:
+        return {
+            'statusCode': 200,
+            'body': 'Event with ID ' + str(event_id) + ' successfully updated'
+        }
     return {
-        'statusCode': 200,
-        'body': 'Event with ID ' + str(event_id) + ' successfully updated'
+        'statusCode': 404,
+        'body': 'Event with ID ' + str(event_id) + ' not found'
     }
 
 def create_database(event, context):
