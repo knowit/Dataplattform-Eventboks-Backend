@@ -1,5 +1,4 @@
 from marshmallow import Schema, fields, post_load
-# from .database import Event
 
 class _EventSchema(Schema):
     id = fields.String()
@@ -9,9 +8,7 @@ class _EventSchema(Schema):
     end = fields.DateTime()
     eventcode = fields.String()
     active = fields.Boolean()
+    isgoogle = fields.Boolean()
 
-    # @post_load
-    # def create_event(self, data, **kwargs):
-    #     return Event(**data)
 
 eventSchema = _EventSchema()

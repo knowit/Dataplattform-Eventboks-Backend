@@ -2,6 +2,7 @@ import json
 import logging
 from util.database import create_tables, Session, Event
 from util.schemas import eventSchema
+from util.google_event import google_sync
 
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
@@ -64,3 +65,11 @@ def update_event(e, context):
 
 def create_database(event, context):
     create_tables()
+
+def sync_google(event, context):
+    events = google_sync()
+
+    session = Session()
+    session.add_all(events)
+    session.commit()
+    session.close()
