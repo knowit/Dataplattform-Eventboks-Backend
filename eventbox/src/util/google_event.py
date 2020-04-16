@@ -5,10 +5,13 @@ import re
 from datetime import datetime, timezone
 
 import boto3
+from botocore.exceptions import ClientError
 import httplib2
 import googleapiclient.discovery as api
 from googleapiclient.errors import HttpError
 from oauth2client.service_account import ServiceAccountCredentials
+
+from .database import Event
 
 _logger = logging.getLogger()
 _logger.setLevel(logging.INFO)
@@ -41,26 +44,29 @@ def google_sync():
     events = []
 
     for calendar in calendars:
-        id = re.compile('.*_(.*)@.*').findall(calendar)[0]
-        _logger.info(id)
-        name = 'dev/eventBox/' + id
-        _logger.info(name)
-        syncToken = ssm.get_parameter(
-            Name=name,
-            WithDecryption = False
-        )
+        calendar_id = re.compile('.*_(.*)@.*').findall(calendar)[0]
+
+        try:
+            syncToken = ssm.get_parameter(
+                Name='/dev/eventBox/' + calendar_id,
+                WithDecryption = False
+            )
+        except ClientError as e:
+            if e.response['Error']['Code'] == 'ParameterNotFound':
+                syncToken = None
+            else:
+                raise e
 
         request = service.events().list(
             calendarId=calendar,
             singleEvents=True,
-            timeMin=datetime.now(timezone.utc).isoformat(),
         )
 
         res, nextSyncToken = _sync(request, syncToken)
 
         events.extend(res)
         ssm.put_parameter(
-            Name='/dev/eventBox/' + calendar,
+            Name='/dev/eventBox/' + calendar_id,
             Value=nextSyncToken,
             Type='String'
         )
@@ -87,6 +93,7 @@ def _sync(request, syncToken):
 
 
         for item in page['items']:
+            _logger.info(item)
             e = Event(
                 eventname=item['summary'],
                 creator=item['creator']['email'],

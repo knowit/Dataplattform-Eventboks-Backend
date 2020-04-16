@@ -186,13 +186,8 @@ resources: # The resources your functions use
                 - Effect: Allow
                   Action:
                     - 'ssm:GetParameter*'
-                    - 'ssm:SetParameter*'
+                    - 'ssm:PutParameter*'
                   Resource: !Sub 'arn:aws:ssm:#{AWS::Region}:#{AWS::AccountId}:parameter/${self:custom.stage}/eventBox/*' # Only give access to what the lambda needs
-                - Effect: Allow
-                  Action:
-                    - 'ssm:GetParameter*'
-                    - 'ssm:SetParameter*'
-                  Resource: !Sub 'arn:aws:ssm:#{AWS::Region}:#{AWS::AccountId}:parameter/${self:custom.stage}/eventBox/googleSyncToken/*' # Only give access to what the lambda needs
   Outputs: # The outputs that your AWS CloudFormation Stack should produce. This allows references between services.
 
 plugins:

@@ -4,6 +4,8 @@ from util.database import create_tables, Session, Event
 from util.schemas import eventSchema
 from util.google_event import google_sync
 
+import boto3
+
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
 
@@ -73,3 +75,10 @@ def sync_google(event, context):
     session.add_all(events)
     session.commit()
     session.close()
+
+def test(event, context):
+    ssm = boto3.client('ssm')
+    test = ssm.get_parameter(
+        Name='/dev/eventBox/foo'
+    )
+    logger.info(test)
