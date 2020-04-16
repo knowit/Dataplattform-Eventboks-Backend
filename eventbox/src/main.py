@@ -58,7 +58,7 @@ def delete_event(e, context):
 def update_event(e, context):
     event_id = e['pathParameters']['id']
     session = Session()
-    body = json.loads(e['body'])
+    body = eventSchema.loads(e['body'])
     res = session.query(Event).filter(Event.id == event_id).update(body)
     session.commit()
     session.close()
