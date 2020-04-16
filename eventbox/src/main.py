@@ -2,7 +2,6 @@ import json
 import logging
 from util.database import create_tables, Session, Event
 from util.schemas import eventSchema
-from sqlalchemy.orm.exc import UnmappedInstanceError
 
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
