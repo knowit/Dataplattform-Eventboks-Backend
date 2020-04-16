@@ -2,6 +2,7 @@ import json
 import logging
 from util.database import create_tables, Session, Event
 from util.schemas import eventSchema
+from sqlalchemy.orm.exc import UnmappedInstanceError
 
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
@@ -59,25 +60,23 @@ def update_event(e, context):
     event_id = e['pathParameters']['id']
     session = Session()
     event = session.query(Event).filter(Event.id == event_id).first()
-    if not event:
-        return {
-            'statusCode': 404,
-            'body': 'Event not found'
-    }
-    
-    body = eventSchema.loads(e['body'])
-    event.creator = body["creator"]
-    event.start = body["start"]
-    event.end = body["end"]
-    event.eventcode = body["eventcode"]
-    event.active = body["active"]
-    
-    session.commit()
+    try:
+        body = eventSchema.loads(e['body'])
+        event.creator = body["creator"]
+        event.start = body["start"]
+        event.end = body["end"]
+        event.eventcode = body["eventcode"]
+        event.active = body["active"]
+        session.commit()
+    except (UnmappedInstanceError, AttributeError):
+        return{
+            'statusCode' : 404,
+            'body' : 'Event with ID ' + str(event_id) + ' not found'
+        } 
     session.close()
-
     return {
         'statusCode': 200,
-        'body': 'success'
+        'body': 'Event with ID ' + str(event_id) + ' successfully updated'
     }
 
 def create_database(event, context):
