@@ -91,11 +91,18 @@ def create_database(event, context):
 
 def verify_eventcode(e, context):
     event_code = e['pathParameters']['eventcode']
-
     session = Session()
-    event = session.query(Event).filter(Event.eventcode == event_code).first()
-    session.close()
 
+    try:
+        event = session.query(Event).filter(Event.eventcode == event_code).filter(Event.active).first()
+        session.delete(event)
+        session.commit()
+        session.close()
+    except UnmappedInstanceError:
+        return{
+            'statusCode': 404,
+            'body': 'Event with eventcode ' + str(event_code) + ' not found'
+        }
     return{
         'statusCode': 200,
         'body': eventSchema.dumps(event)
