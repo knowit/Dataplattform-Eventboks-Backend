@@ -37,13 +37,12 @@ provider:
   environment: # Service wide environment variables
     #ENVIRONMENT_VARIABLE_NAME: 123456789
   vpc: # This is needed to access postgres
-      securityGroupIds:
-        - !ImportValue ${self:custom.stage}-PostgresAccessSecurityGroupID #This group have access to postgres
-      subnetIds:
-        - !ImportValue ${self:custom.stage}-SubnetAID
-        - !ImportValue ${self:custom.stage}-SubnetBID
-        - !ImportValue ${self:custom.stage}-SubnetCID
-
+    securityGroupIds:
+      - !ImportValue ${self:custom.stage}-PostgresAccessSecurityGroupID #This group have access to postgres
+    subnetIds:
+      - !ImportValue ${self:custom.stage}-SubnetAID
+      - !ImportValue ${self:custom.stage}-SubnetBID
+      - !ImportValue ${self:custom.stage}-SubnetCID
 
 package:
   individually: true
@@ -67,8 +66,8 @@ functions:
     events:
       - http:
           path: /eventbox/v1/events
-          method: get 
-    
+          method: get
+
   getEvent:
     module: ${self:custom.editable.folder} # path to function
     handler: ${self:custom.editable.handlerFile}.get_event # fileName.functionNameInFile
@@ -83,7 +82,7 @@ functions:
       - http:
           path: /eventbox/v1/event/{id}
           method: get
-    
+
   addEvent:
     module: ${self:custom.editable.folder} # path to function
     handler: ${self:custom.editable.handlerFile}.add_event # fileName.functionNameInFile
@@ -98,7 +97,7 @@ functions:
       - http:
           path: /eventbox/v1/event
           method: post
-    
+
   deleteEvent:
     module: ${self:custom.editable.folder} # path to function
     handler: ${self:custom.editable.handlerFile}.delete_event # fileName.functionNameInFile
@@ -113,7 +112,7 @@ functions:
       - http:
           path: /eventbox/v1/event/{id}
           method: delete
-    
+
   updateEvent:
     module: ${self:custom.editable.folder} # path to function
     handler: ${self:custom.editable.handlerFile}.update_event # fileName.functionNameInFile
@@ -128,6 +127,22 @@ functions:
       - http:
           path: /eventbox/v1/event/{id}
           method: put
+
+  verifyEventcode:
+    module: ${self:custom.editable.folder} # path to function
+    handler: ${self:custom.editable.handlerFile}.verify_eventcode # fileName.functionNameInFile
+    description: ${self:custom.editable.description}
+    environment: # Environment variables, often stored in SSM
+      #ENVIRONMENT_VARIABLE_NAME: ${ssm:ssm_key}
+      STAGE: ${self:custom.stage}
+      DATABASE_ENDPOINT_ADDRESS: !ImportValue ${self:custom.stage}-DBEndpointAddress
+      DATABASE_ENDPOINT_PORT: !ImportValue ${self:custom.stage}-DBEndpointPort
+    tags: # Tag for this function. Every function are tagged with stage by default
+    events:
+      - http:
+          path: /eventbox/v1/eventcode/{eventcode}
+          method: get
+
   createDb:
     module: ${self:custom.editable.folder} # path to function
     handler: ${self:custom.editable.handlerFile}.create_database # fileName.functionNameInFile
@@ -177,7 +192,7 @@ resources: # The resources your functions use
         Policies: # Give lambda access to Parameter Store
           - PolicyName: ${self:custom.stage}-ParameterStore-${self:service}
             PolicyDocument:
-              Version: '2012-10-17'
+              Version: "2012-10-17"
               Statement:
                 - Effect: Allow
                   Action:
