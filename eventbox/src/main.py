@@ -91,6 +91,7 @@ def update_event(e, context):
 def create_database(event, context):
     create_tables()
 
+
 def sync_google(event, context):
     events = google_sync()
 
@@ -99,12 +100,6 @@ def sync_google(event, context):
     session.commit()
     session.close()
 
-def test(event, context):
-    ssm = boto3.client('ssm')
-    test = ssm.get_parameter(
-        Name='/dev/eventBox/foo'
-    )
-    logger.info(test)
 
 def verify_eventcode(e, context):
     event_code = e['pathParameters']['eventcode']

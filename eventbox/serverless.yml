@@ -159,6 +159,7 @@ functions:
     handler: ${self:custom.editable.handlerFile}.sync_google # fileName.functionNameInFile
     description: ${self:custom.editable.description}
     role: !GetAtt S3Access.Arn
+    timeout: 60 #Seconds, may take very long on full sync
     environment: # Environment variables, often stored in SSM
       #ENVIRONMENT_VARIABLE_NAME: ${ssm:ssm_key}
       STAGE: ${self:custom.stage}

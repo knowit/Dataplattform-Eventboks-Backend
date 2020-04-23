@@ -50,58 +50,66 @@ def google_sync():
             syncToken = ssm.get_parameter(
                 Name='/dev/eventBox/' + calendar_id,
                 WithDecryption = False
-            )
+            )['Parameter']['Value']
         except ClientError as e:
             if e.response['Error']['Code'] == 'ParameterNotFound':
                 syncToken = None
             else:
                 raise e
 
-        request = service.events().list(
+        requestParams = dict(
             calendarId=calendar,
             singleEvents=True,
         )
 
-        res, nextSyncToken = _sync(request, syncToken)
+        res, nextSyncToken = _sync(service, syncToken, **requestParams)
 
         events.extend(res)
         ssm.put_parameter(
             Name='/dev/eventBox/' + calendar_id,
             Value=nextSyncToken,
-            Type='String'
+            Type='String',
+            Overwrite=True
         )
 
     return events
 
 
 
-def _sync(request, syncToken):
+def _sync(service, syncToken, **requestParams):
     pageToken = None
     res = []
 
+    _logger.info(syncToken)
+
     if not syncToken:
-        request.timeMin = '2019-01-01T00:00:00+00:00'
+        requestParams['timeMin'] = '2019-01-01T00:00:00+00:00'
 
     while True:
-        request.pageToken = pageToken
+        requestParams['pageToken'] = pageToken
         try:
-            page = request.execute()
+            page = service.events().list(
+                syncToken=syncToken, 
+                **requestParams
+            ).execute()
         except HttpError as e:
             if e.resp.status == 410:
                 _logger.info('Sync Token expired')
-                return sync(request, None)
+                return _sync(service, None, **requestParams)
 
 
         for item in page['items']:
-            _logger.info(item)
-            e = Event(
-                eventname=item['summary'],
-                creator=item['creator']['email'],
-                start=item['start']['dateTime'],
-                end=item['end']['dateTime'],
-                isgoogle=True
-            )
-            res.append(e)
+            try:
+                e = Event(
+                    eventname=item['summary'],
+                    creator=item['creator']['email'],
+                    start=_getdate(item['start']),
+                    end=_getdate(item['end']),
+                    isgoogle=True
+                )
+                res.append(e)
+            except KeyError:
+                _logger.info('Ignoring item: {}'.format(item))
         
         pageToken = page.get('nextPageToken')
 
@@ -109,3 +117,12 @@ def _sync(request, syncToken):
             break
     
     return (res, page['nextSyncToken'])
+
+def _getdate(item):
+    if 'dateTime' in item:
+        return item['dateTime']
+    elif 'date' in item:
+        return item['date'] + 'T00:00+02:00'
+    else:
+        _logger.info('Could not find date')
+        raise KeyError
