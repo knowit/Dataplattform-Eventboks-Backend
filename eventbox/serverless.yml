@@ -166,11 +166,12 @@ functions:
       DATABASE_ENDPOINT_ADDRESS: !ImportValue ${self:custom.stage}-DBEndpointAddress
       DATABASE_ENDPOINT_PORT: !ImportValue ${self:custom.stage}-DBEndpointPort
     tags: # Tag for this function. Every function are tagged with stage by default
-    # - schedule:
-    #       name: ${self:custom.stage}-${self:service}-timer
-    #       description: ${self:custom.editable.description}
-    #       rate: ${self:custom.editable.scheduleRate}
-    #       enabled: true
+    events:
+      - schedule:
+        name: ${self:custom.stage}-${self:service}-timer
+        description: ${self:custom.editable.description}
+        rate: ${self:custom.editable.scheduleRate}
+        enabled: true
     
 
 resources: # The resources your functions use
