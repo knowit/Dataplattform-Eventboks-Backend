@@ -7,6 +7,7 @@ from sqlalchemy.orm.exc import UnmappedInstanceError
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
 
+
 def get_events(e, context):
     # TODO: Should filter by creator
     session = Session()
@@ -17,23 +18,25 @@ def get_events(e, context):
         'body': eventSchema.dumps(result, many=True)
     }
 
+
 def get_event(e, context):
     event_id = e['pathParameters']['id']
 
     session = Session()
     result = session.query(Event).filter(Event.id == event_id).first()
     session.close()
-    
+
     return {
         'statusCode': 200,
         'body': eventSchema.dumps(result)
     }
 
+
 def add_event(e, context):
     body = eventSchema.loads(e['body'])
     logger.info(body)
     event = Event(**body)
-    
+
     session = Session()
     session.add(event)
     session.commit()
@@ -81,5 +84,22 @@ def update_event(e, context):
         'body': 'Event with ID ' + str(event_id) + ' not found'
     }
 
+
 def create_database(event, context):
     create_tables()
+
+
+def verify_eventcode(e, context):
+    event_code = e['pathParameters']['eventcode']
+    session = Session()
+    event = session.query(Event).filter(Event.eventcode == event_code).filter(Event.active).first()
+    session.close()
+    if not event:
+        return{
+            'statusCode': 404,
+            'body': 'Event with eventcode ' + str(event_code) + ' not found'
+        }
+    return{
+        'statusCode': 200,
+        'body': eventSchema.dumps(event)
+    }
