@@ -95,8 +95,6 @@ def verify_eventcode(e, context):
 
     try:
         event = session.query(Event).filter(Event.eventcode == event_code).filter(Event.active).first()
-        session.delete(event)
-        session.commit()
         session.close()
     except UnmappedInstanceError:
         return{
