@@ -65,10 +65,20 @@ def delete_event(e, context):
 
 
 def update_event(e, context):
-    # TODO
+    event_id = e['pathParameters']['id']
+    session = Session()
+    body = eventSchema.loads(e['body'])
+    res = session.query(Event).filter(Event.id == event_id).update(body)
+    session.commit()
+    session.close()
+    if res > 0:
+        return {
+            'statusCode': 200,
+            'body': 'Event with ID ' + str(event_id) + ' successfully updated'
+        }
     return {
-        'statusCode': 200,
-        'body': 'Hello from update event'
+        'statusCode': 404,
+        'body': 'Event with ID ' + str(event_id) + ' not found'
     }
 
 def create_database(event, context):
