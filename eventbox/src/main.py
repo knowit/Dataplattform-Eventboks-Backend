@@ -1,10 +1,11 @@
 import json
 import logging
+import re
+
 from util.database import create_tables, Session, Event
 from util.schemas import eventSchema
-from util.google_event import google_sync
+from util.google_event import sync, get_google_service, get_google_calendars, get_google_synctoken, set_google_synctoken, HttpError
 
-import boto3
 from sqlalchemy.orm.exc import UnmappedInstanceError
 
 logger = logging.getLogger()
@@ -93,11 +94,44 @@ def create_database(event, context):
 
 
 def sync_google(event, context):
-    events = google_sync()
-
     session = Session()
-    session.add_all(events)
-    session.commit()
+    
+    service = get_google_service()
+    calendars = get_google_calendars()
+
+    for calendar in calendars:
+        calendar_id = re.compile('.*_(.*)@.*').findall(calendar)[0]
+        syncToken = get_google_synctoken(calendar_id)
+
+        if not syncToken:
+            logger.info('No sync token found, deleting entries')
+            session.query(Event).filter(Event.isgoogle, Event.google_calendar_id == calendar_id).delete()
+
+
+        requestParams = dict(
+            calendarId=calendar,
+            singleEvents=True,
+        )
+
+        try:
+            res, nextSyncToken = sync(service, syncToken, **requestParams)
+        except HttpError as e:
+            if e.resp.status == 410:
+                # Do full sync
+                _logger.info('Sync Token expired, do full sync')
+                session.query(Event).filter(Event.isgoogle, Event.google_calendar_id == calendar_id).delete()
+                res, nextSyncToken = sync(service, None, **requestParams)
+
+        res, nextSyncToken = sync(service, syncToken, **requestParams)
+
+        for item in res:
+            item.google_calendar_id = calendar_id
+        
+        session.add_all(res)
+        session.commit()
+        
+        set_google_synctoken(calendar_id, nextSyncToken)
+
     session.close()
 
 

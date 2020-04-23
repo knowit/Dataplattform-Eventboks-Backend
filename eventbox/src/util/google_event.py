@@ -15,68 +15,59 @@ from .database import Event
 
 _logger = logging.getLogger()
 _logger.setLevel(logging.INFO)
+_ssm = boto3.client('ssm')
 
-def google_sync():
-    ssm = boto3.client('ssm')
-    credentials = ssm.get_parameter(
+def get_google_service():
+    credentials = _ssm.get_parameter(
         Name='/dev/eventBox/googleCredentials',
         WithDecryption=False
     )
     credentials = json.loads(credentials['Parameter']['Value'])
     credentials = ServiceAccountCredentials.from_json_keyfile_dict(credentials, ['https://www.googleapis.com/auth/calendar.readonly'])
-    
-    calendars = ssm.get_parameter(
-        Name='/dev/eventBox/googleCalendarIds',
-        WithDecryption=False
-    )['Parameter']['Value'].split(',')
 
     http = credentials.authorize(
         httplib2.Http()
     )
 
-    service = api.build(
+    return api.build(
         serviceName='calendar',
         version='v3',
         http=http,
         cache_discovery=False
     )
 
-    events = []
 
-    for calendar in calendars:
-        calendar_id = re.compile('.*_(.*)@.*').findall(calendar)[0]
+def get_google_calendars():
+    return _ssm.get_parameter(
+        Name='/dev/eventBox/googleCalendarIds',
+        WithDecryption=False
+    )['Parameter']['Value'].split(',')
 
-        try:
-            syncToken = ssm.get_parameter(
-                Name='/dev/eventBox/' + calendar_id,
-                WithDecryption = False
-            )['Parameter']['Value']
-        except ClientError as e:
-            if e.response['Error']['Code'] == 'ParameterNotFound':
-                syncToken = None
-            else:
-                raise e
-
-        requestParams = dict(
-            calendarId=calendar,
-            singleEvents=True,
-        )
-
-        res, nextSyncToken = _sync(service, syncToken, **requestParams)
-
-        events.extend(res)
-        ssm.put_parameter(
+def get_google_synctoken(calendar_id):
+    try:
+        syncToken = _ssm.get_parameter(
             Name='/dev/eventBox/' + calendar_id,
-            Value=nextSyncToken,
-            Type='String',
-            Overwrite=True
-        )
+            WithDecryption = False
+        )['Parameter']['Value']
+    except ClientError as e:
+        if e.response['Error']['Code'] == 'ParameterNotFound':
+            syncToken = None
+        else:
+            raise e
+        
+    return syncToken
 
-    return events
+
+def set_google_synctoken(calendar_id, syncToken):
+    _ssm.put_parameter(
+        Name='/dev/eventBox/' + calendar_id,
+        Value=syncToken,
+        Type='String',
+        Overwrite=True
+    )
 
 
-
-def _sync(service, syncToken, **requestParams):
+def sync(service, syncToken, **requestParams):
     pageToken = None
     res = []
 
@@ -87,16 +78,10 @@ def _sync(service, syncToken, **requestParams):
 
     while True:
         requestParams['pageToken'] = pageToken
-        try:
-            page = service.events().list(
-                syncToken=syncToken, 
-                **requestParams
-            ).execute()
-        except HttpError as e:
-            if e.resp.status == 410:
-                _logger.info('Sync Token expired')
-                return _sync(service, None, **requestParams)
-
+        page = service.events().list(
+            syncToken=syncToken, 
+            **requestParams
+        ).execute()
 
         for item in page['items']:
             try:
@@ -117,6 +102,7 @@ def _sync(service, syncToken, **requestParams):
             break
     
     return (res, page['nextSyncToken'])
+
 
 def _getdate(item):
     if 'dateTime' in item:

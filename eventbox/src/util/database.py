@@ -64,6 +64,7 @@ class Event(_Base):
     __tablename__ = 'eventbox_service_events'
 
     id = Column(Integer, primary_key=True)
+    google_calendar_id = Column(String(255))
     eventname = Column(String(length=255))
     creator = Column(String(length=255))
     start = Column(TIMESTAMP)
