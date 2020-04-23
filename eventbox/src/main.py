@@ -81,5 +81,5 @@ def verify_eventcode(e, context):
 
     return{
         'statusCode': 200,
-        'body': eventSchema.dumps(event, many=True)
+        'body': eventSchema.dumps(event)
     }
