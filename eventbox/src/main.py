@@ -3,10 +3,9 @@ import logging
 import re
 
 from util.database import create_tables, Session, Event
-from util.schemas import eventSchema
 from util.google_event import sync, get_google_service, get_google_calendars, get_google_synctoken, set_google_synctoken, HttpError
-
 from util.schemas import eventRequestSchema, eventResponseSchema
+
 from sqlalchemy.orm.exc import UnmappedInstanceError
 
 logger = logging.getLogger()
