@@ -50,6 +50,7 @@ def create_tables():
     _logger.info('Creating tables')
     Event.__table__.drop(_engine)
     _Base.metadata.create_all(_engine)
+    _logger.info(_Base.metadata.tables)
     _logger.info('Tables created')
 
 
@@ -63,9 +64,11 @@ class Event(_Base):
     __tablename__ = 'eventbox_service_events'
 
     id = Column(Integer, primary_key=True)
+    google_calendar_id = Column(String(255))
     eventname = Column(String(length=255))
     creator = Column(String(length=255))
     start = Column(TIMESTAMP)
     end = Column(TIMESTAMP)
-    eventcode = Column(String(length=5), default=_gencode, unique=True)
+    eventcode = Column(String(length=5), default=_gencode, unique=True, index=True)
     active = Column(Boolean)
+    isgoogle = Column(Boolean, default=False)
