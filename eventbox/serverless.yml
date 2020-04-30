@@ -67,6 +67,7 @@ functions:
       - http:
           path: /eventbox/v1/events
           method: get
+          private: true
 
   getEvent:
     module: ${self:custom.editable.folder} # path to function
@@ -82,6 +83,7 @@ functions:
       - http:
           path: /eventbox/v1/event/{id}
           method: get
+          private: true
 
   addEvent:
     module: ${self:custom.editable.folder} # path to function
@@ -97,6 +99,7 @@ functions:
       - http:
           path: /eventbox/v1/event
           method: post
+          private: true
 
   deleteEvent:
     module: ${self:custom.editable.folder} # path to function
@@ -112,6 +115,7 @@ functions:
       - http:
           path: /eventbox/v1/event/{id}
           method: delete
+          private: true
 
   updateEvent:
     module: ${self:custom.editable.folder} # path to function
@@ -127,6 +131,7 @@ functions:
       - http:
           path: /eventbox/v1/event/{id}
           method: put
+          private: true
 
   verifyEventcode:
     module: ${self:custom.editable.folder} # path to function
