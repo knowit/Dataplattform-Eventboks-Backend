@@ -105,7 +105,7 @@ def sync_google(event, context):
 
         if not syncToken:
             logger.info('No sync token found, deleting entries')
-            session.query(Event).filter(Event.isgoogle, Event.google_calendar_id == calendar_id).delete()
+            session.query(Event).filter(Event.google_calendar_id == calendar_id).delete()
 
 
         requestParams = dict(
@@ -119,7 +119,7 @@ def sync_google(event, context):
             if e.resp.status == 410:
                 # Do full sync
                 _logger.info('Sync Token expired, do full sync')
-                session.query(Event).filter(Event.isgoogle, Event.google_calendar_id == calendar_id).delete()
+                session.query(Event).filter(Event.google_calendar_id == calendar_id).delete()
                 res, nextSyncToken = sync(service, None, **requestParams)
 
         res, nextSyncToken = sync(service, syncToken, **requestParams)
