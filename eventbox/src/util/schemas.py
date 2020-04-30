@@ -1,17 +1,23 @@
 from marshmallow import Schema, fields, post_load
 # from .database import Event
 
-class _EventSchema(Schema):
-    id = fields.String()
+class _Event(Schema):
     eventname = fields.String()
     creator = fields.String()
     start = fields.DateTime()
     end = fields.DateTime()
-    eventcode = fields.String()
-    active = fields.Boolean()
 
     # @post_load
     # def create_event(self, data, **kwargs):
     #     return Event(**data)
 
-eventSchema = _EventSchema()
+class EventRequest(_Event):
+    pass
+
+class EventResponse(_Event):
+    id = fields.String()
+    eventcode = fields.String()
+    active = fields.Boolean()
+
+eventRequestSchema = EventRequest()
+eventResponseSchema = EventResponse()
