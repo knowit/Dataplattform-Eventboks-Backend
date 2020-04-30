@@ -1,7 +1,7 @@
 import json
 import logging
 from util.database import create_tables, Session, Event
-from util.schemas import eventSchema
+from util.schemas import eventRequestSchema, eventResponseSchema
 from sqlalchemy.orm.exc import UnmappedInstanceError
 
 logger = logging.getLogger()
@@ -15,7 +15,7 @@ def get_events(e, context):
     session.close()
     return {
         'statusCode': 200,
-        'body': eventSchema.dumps(result, many=True)
+        'body': eventResponseSchema.dumps(result, many=True)
     }
 
 
@@ -28,12 +28,12 @@ def get_event(e, context):
 
     return {
         'statusCode': 200,
-        'body': eventSchema.dumps(result)
+        'body': eventResponseSchema.dumps(result)
     }
 
 
 def add_event(e, context):
-    body = eventSchema.loads(e['body'])
+    body = eventRequestSchema.loads(e['body'])
     logger.info(body)
     event = Event(**body)
 
@@ -70,7 +70,7 @@ def delete_event(e, context):
 def update_event(e, context):
     event_id = e['pathParameters']['id']
     session = Session()
-    body = eventSchema.loads(e['body'])
+    body = eventRequestSchema.loads(e['body'])
     res = session.query(Event).filter(Event.id == event_id).update(body)
     session.commit()
     session.close()
@@ -101,5 +101,5 @@ def verify_eventcode(e, context):
         }
     return{
         'statusCode': 200,
-        'body': eventSchema.dumps(event)
+        'body': eventResponseSchema.dumps(event)
     }
